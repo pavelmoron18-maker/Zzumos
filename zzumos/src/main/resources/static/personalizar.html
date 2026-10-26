@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zzumos · Personalizar desayuno</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/zzumos.css">
+</head>
+<body>
+<header id="nav"></header>
+<main class="wrap" id="main"><p>Cargando…</p></main>
+<script src="js/app.js"></script>
+<script>
+const id = Number(new URLSearchParams(location.search).get('id'));
+const GRUPOS = { PAN: ['Tipo de pan', 'radio'], COMPLEMENTO: ['Complementos adicionales', 'checkbox'], BEBIDA: ['Bebida', 'radio'] };
+let prod, qty = 1;
+
+function seleccion() {
+  return [...document.querySelectorAll('#opts input:checked')].map(i => ({
+    id: Number(i.value), nombre: i.dataset.nombre, precio: Number(i.dataset.precio) }));
+}
+function total() {
+  return (Number(prod.precioBase) + seleccion().reduce((s, o) => s + o.precio, 0)) * qty;
+}
+function actualizar() {
+  document.getElementById('q').textContent = qty;
+  document.getElementById('agregar').textContent = 'Agregar al carrito · ' + money(total());
+}
+function pintar() {
+  const grupos = Object.keys(GRUPOS).map(g => {
+    const ops = prod.opciones.filter(o => o.grupo === g);
+    if (!ops.length) return '';
+    const [titulo, tipo] = GRUPOS[g];
+    return `<div class="card"><p class="sec-t">${titulo}</p>` + ops.map((o, i) => `
+      <label class="op"><input type="${tipo}" name="${g}" value="${o.id}" data-nombre="${esc(o.nombre)}"
+        data-precio="${o.precioAdicional}" ${tipo === 'radio' && i === 0 ? 'checked' : ''}>
+        ${esc(o.nombre)}${Number(o.precioAdicional) > 0 ? `<span class="mas">+${money(o.precioAdicional)}</span>` : ''}</label>`).join('') + '</div>';
+  }).join('');
+  document.getElementById('main').innerHTML = `
+    <div class="cols">
+      <div class="stack">
+        <div class="card"><div class="ph">🍳</div><h3>${esc(prod.nombre)}</h3><p>${esc(prod.descripcion)}</p>
+          <span class="precio">${money(prod.precioBase)}</span>
+          <div class="qty"><button id="menos">−</button><b id="q">1</b><button id="mas">+</button></div></div>
+        <div class="card"><p class="sec-t">Nota especial para cocina</p>
+          <textarea id="nota" rows="3" maxlength="200" placeholder="Ej: sin sal, alergia a la lactosa…"></textarea></div>
+      </div>
+      <div class="stack" id="opts">${grupos}
+        <button class="btn full" id="agregar"></button></div>
+    </div>`;
+  document.getElementById('opts').onchange = actualizar;
+  document.getElementById('menos').onclick = () => { if (qty > 1) { qty--; actualizar(); } };
+  document.getElementById('mas').onclick = () => { if (qty < 20) { qty++; actualizar(); } };
+  document.getElementById('agregar').onclick = () => {
+    Cart.add({ idProducto: prod.id, nombre: prod.nombre, precioBase: prod.precioBase, cantidad: qty,
+               opciones: seleccion(), nota: document.getElementById('nota').value.trim() });
+    toast('Agregado al carrito ✓');
+    setTimeout(() => location.href = 'index.html', 900);
+  };
+  actualizar();
+}
+(async () => {
+  await renderNav('inicio');
+  try {
+    prod = (await API.get('/api/productos')).find(p => p.id === id);
+    if (!prod) throw new Error('Desayuno no encontrado');
+    pintar();
+  } catch (e) { document.getElementById('main').innerHTML = `<p class="err">${esc(e.message)}</p>`; }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,61 @@
+### Pruebas de la API (extensión "REST Client" de VS Code: pulsa "Send Request").
+### REST Client guarda la cookie de sesión automáticamente entre peticiones.
+
+### 1. Catálogo (público)
+GET http://localhost:8080/api/productos
+
+### 2. Registro de cliente
+POST http://localhost:8080/api/auth/registro
+Content-Type: application/json
+
+{
+  "nombres": "Luis",
+  "apellidos": "Ríos",
+  "telefono": "987654321",
+  "correo": "luis@correo.com",
+  "contrasena": "Clave12345"
+}
+
+### 3. Login de cliente
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{ "correo": "luis@correo.com", "contrasena": "Clave12345" }
+
+### 4. ¿Quién soy?
+GET http://localhost:8080/api/auth/me
+
+### 5. Crear pedido (el cliente sale de la sesión)
+POST http://localhost:8080/api/pedidos
+Content-Type: application/json
+
+{
+  "metodoPago": "YAPE",
+  "direccionEntrega": "Av. Universitaria 123, Ica",
+  "costoEnvio": 3.00,
+  "items": [ { "idProducto": 1, "cantidad": 1, "opciones": [1, 4, 6, 9] } ]
+}
+
+### 6. Mis pedidos
+GET http://localhost:8080/api/pedidos/mis-pedidos
+
+### 7. Seguimiento por código (cambia ZZ-0001 por el que te devolvió el paso 5)
+GET http://localhost:8080/api/pedidos/ZZ-0001
+
+### 8. Cerrar sesión
+POST http://localhost:8080/api/auth/logout
+
+### 9. Login del personal (cuenta de prueba)
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{ "correo": "personal@zzumos.com", "contrasena": "Admin1234!" }
+
+### 10. Ver todos los pedidos (solo PERSONAL / ADMINISTRADOR)
+GET http://localhost:8080/api/pedidos?estado=PENDIENTE
+
+### 11. Avanzar el estado (usa el id numérico del pedido)
+PATCH http://localhost:8080/api/pedidos/1/estado
+Content-Type: application/json
+
+{ "estado": "EN_PREPARACION" }

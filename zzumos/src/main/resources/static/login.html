@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zzumos · Iniciar sesión</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/zzumos.css">
+</head>
+<body>
+<header id="nav"></header>
+<main class="caja"><div class="card">
+  <div class="tabs"><button class="btn" id="t1">Iniciar sesión</button><button class="btn sec" id="t2">Crear cuenta</button></div>
+
+  <form class="f" id="fLogin">
+    <label>Correo electrónico</label><input type="email" id="lc" required>
+    <label>Contraseña</label><input type="password" id="lp" required>
+    <p class="err" id="e1"></p><br><button class="btn full">Iniciar sesión</button>
+  </form>
+
+  <form class="f" id="fReg" hidden>
+    <label>Nombres</label><input id="rn" maxlength="100" required>
+    <label>Apellidos</label><input id="ra" maxlength="100">
+    <label>Teléfono</label><input id="rt" inputmode="tel" placeholder="987654321" required>
+    <label>Correo electrónico</label><input type="email" id="rc" required>
+    <label>Contraseña (mínimo 8 caracteres)</label><input type="password" id="rp" minlength="8" maxlength="72" required>
+    <p class="err" id="e2"></p><br><button class="btn full">Crear cuenta</button>
+  </form>
+</div></main>
+<script src="js/app.js"></script>
+<script>
+renderNav('');
+const destino = () => new URLSearchParams(location.search).get('next') || 'index.html';
+function tab(login) {
+  fLogin.hidden = !login; fReg.hidden = login;
+  t1.className = 'btn' + (login ? '' : ' sec'); t2.className = 'btn' + (login ? ' sec' : '');
+}
+t1.onclick = () => tab(true); t2.onclick = () => tab(false);
+
+async function entrar(correo, contrasena) {
+  await API.post('/api/auth/login', { correo, contrasena });
+  location.href = destino();
+}
+fLogin.onsubmit = async e => {
+  e.preventDefault(); e1.textContent = '';
+  try { await entrar(lc.value, lp.value); } catch (x) { e1.textContent = x.message; }
+};
+fReg.onsubmit = async e => {
+  e.preventDefault(); e2.textContent = '';
+  try {
+    await API.post('/api/auth/registro', { nombres: rn.value, apellidos: ra.value,
+      telefono: rt.value, correo: rc.value, contrasena: rp.value });
+    await entrar(rc.value, rp.value);
+  } catch (x) { e2.textContent = x.message; }
+};
+</script>
+</body>
+</html>
